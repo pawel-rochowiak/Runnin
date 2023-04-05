@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://fonts.googleapis.com/css?family=Lato:100,300,400,700,900"
+      rel="stylesheet"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bitter:ital,wght@1,800;1,900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="shortcut icon" type="image/png" href="img/logo_fav.png" />
+    <link
+      href="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.css"
+      rel="stylesheet"
+    />
+    <script
+      defer
+      src="https://api.mapbox.com/mapbox-gl-js/v2.6.1/mapbox-gl.js"
+    ></script>
+    <script
+      defer
+      src="https://kit.fontawesome.com/3be9479536.js"
+      crossorigin="anonymous"
+    ></script>
+    <script defer src="script.js"></script>
+    <title>Runnin'</title>
+  </head>
+  <body>
+    <div class="row row-bg shadow-lg mx-auto rounded-1 hw-100 main-containter">
+      <div class="sidebar col-4 p-5 text-center h-100">
+        <div class="header bg-white bg-opacity-85 rounded-1 shadow-main">
+          <div class="left">
+            <img
+              class="logo"
+              src="img/logo.png"
+              alt="Logo of the training app"
+            />
+
+            <i class="fa fa-user-circle fs-1 text-primary user-icon"></i>
+          </div>
+
+          <div class="details pt-1 hidden">
+            <span class="details_title">Hey, Runner!</span>
+            <form class="details_stats p-5 pt-3 pb-4">
+              <div class="form-group">
+                <label for="avgSpeed" class="speedFormLabel"
+                  >Average speed (km/h)</label
+                >
+                <input
+                  type="text"
+                  class="form-control totalSpeed"
+                  id="avgSpeed"
+                  placeholder=""
+                  readonly
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="totalKm" class="distanceFormLabel"
+                  >Total distance (km)</label
+                >
+                <input
+                  type="text"
+                  class="form-control totalDist"
+                  id="totalKm"
+                  placeholder=""
+                  readonly
+                />
+              </div>
+              <div class="form-group">
+                <label for="kcalInput" class="kcalFormLabel"
+                  >Total calories burned</label
+                >
+                <input
+                  type="text"
+                  class="form-control totalKcal"
+                  id="kcalInput"
+                  placeholder=""
+                  readonly
+                />
+              </div>
+              <div class="form-group input-weight">
+                <label for="weightInput">Weight (kg)</label>
+                <div class="input__container">
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="weightInput"
+                    placeholder="Enter your weight"
+                  />
+                  <button
+                    class="btn p-2 fs-5 btn-primary-dark btn_form btn_weight text-white"
+                    type="button"
+                  >
+                    <i
+                      class="fa-solid fa-check fs-1 text-primary check-icon"
+                    ></i>
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="workouts">
+          <div class="workout-container">
+            <div
+              class="workoutPanel pt-3 bg-white bg-opacity-50 rounded-1 shadow-main position-relative hidden"
+            >
+              <input
+                type="text"
+                class="workout-title"
+                id="inputTitle"
+                placeholder="Workout title"
+              />
+
+              <form class="row gy-3 p-5 pb-4">
+                <div class="form-group col">
+                  <label for="timeInput" class="pb-2">Duration</label>
+                  <input
+                    type="text"
+                    class="form-control duration"
+                    id="timeInput"
+                    placeholder="Enter time"
+                  />
+                </div>
+              </form>
+              <button
+                class="btn mb-4 p-2 fs-5 btn-primary btn_form"
+                type="submit"
+              >
+                Submit
+              </button>
+            </div>
+            <div
+              class="workout workout__warning workout__edit bg-white mt-2 p-3 mb-3 bg-opacity-85 rounded-1 shadow-main position-relative"
+            >
+              <p class="workout__warning-text">
+                Please click twice on the map to add new markers.
+              </p>
+            </div>
+          </div>
+        </div>
+        <footer class="ms-auto container fs-5 mt-3">
+          Custom map provided by
+          <a
+            href="https://www.mapbox.com/"
+            target="_blank"
+            class="text-decoration-none text-white"
+            >MapBox</a
+          >. Online training app designed by
+          <span
+            ><a
+              href="https://www.linkedin.com/in/paweł-rochowiak-847373104"
+              target="_blank"
+              class="text-decoration-none text-white"
+              >Paweł Rochowiak.</a
+            ></span
+          >
+        </footer>
+      </div>
+      <div class="container-sm col-8 white-tint">
+        <div class="map-container" id="map"></div>
+      </div>
+    </div>
+    <script
+      src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+      integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"
+      integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js"
+      integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF"
+      crossorigin="anonymous"
+    ></script>
+  </body>
+</html>

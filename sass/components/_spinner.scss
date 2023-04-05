@@ -1,0 +1,13 @@
+.spinner {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+
+  svg {
+    height: 5rem;
+    width: 5rem;
+    fill: #fff;
+    animation: rotate 2s infinite linear;
+  }
+}
