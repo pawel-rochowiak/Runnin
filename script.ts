@@ -41,6 +41,7 @@ window.addEventListener("resize", function () {
 class Workout {
   time: number;
   name: string;
+  distance?: number | string;
   private speed!: number;
   private kcal!: number;
 
@@ -52,13 +53,13 @@ class Workout {
     this.name = name;
   }
 
-  calcKcal(weight: number) {
+  calcKcal(weight: number): number {
     const MET = 0.2 * this.speed + 0.9 * this.speed + 3.5;
     this.kcal = (this.time * MET * 3.5 * weight) / 200;
     return this.kcal;
   }
 
-  calcSpeed(distance: number) {
+  calcSpeed(distance: number): number {
     // km/h
     this.speed = distance / (this.time / 60);
     return this.speed;
@@ -76,9 +77,10 @@ class App {
   #endPoint?: number;
   #workoutID: number = 0;
   id!: number;
-  parentID?: string;
+  parentID?: string | HTMLDivElement;
   distance?: number;
   total!: number;
+  isEditing?: boolean;
   //geojsonTrack;
   trackArr: { geometry: { coordinates: [] } }[] = [];
   markersArr: Markers[] = [];
@@ -87,6 +89,7 @@ class App {
     kcal: number;
     speed: number;
     name: string;
+    time: number | string;
   }[] = [];
 
   constructor() {
@@ -325,13 +328,15 @@ class App {
       const workoutsUpdate = document.querySelectorAll(".workout");
 
       workoutsUpdate.forEach((e) => {
-        const idArr = (e as HTMLElement).dataset.id!.split("-");
+        const idArr = (e as HTMLElement).dataset
+          .id!.split("-")
+          .map((el) => +el);
         idArr[1] = this.#workoutID;
         (e as HTMLElement).dataset.id = idArr.join("-");
         this.#workoutID++;
       });
       this._calculateUserStats();
-      this.trackArr.splice(id, 1);
+      this.trackArr.splice(+id, 1);
 
       this._removeStartAndEnd();
       this._removeTrackAndRoute();
@@ -346,8 +351,9 @@ class App {
       .value;
 
     if (target!.classList.contains("btn-edit")) {
-      this.parentID = target!.closest(".workout");
-      this.parentID.classList.add("hidden-left");
+      this.parentID = target!.closest(".workout") as HTMLDivElement;
+      console.log(this.parentID);
+      this.parentID!.classList.add("hidden-left");
       this.id = target.closest(".workout")!.dataset.id.split("-")[1];
 
       workoutPanel.classList.remove("hidden");
@@ -364,12 +370,12 @@ class App {
 
     if (target.classList.contains("btn_form") && edit != null) {
       if (time != "" && name != "") {
-        this.workoutsArr[this.id].name = document.querySelector(
+        this.workoutsArr[this.id].name = (document.querySelector(
           ".workout-title"
-        )!.value;
-        this.workoutsArr[this.id].time = document.querySelector(
+        ) as HTMLInputElement)!.value;
+        this.workoutsArr[this.id].time = (document.querySelector(
           ".duration"
-        )!.value;
+        ) as HTMLInputElement)!.value;
       } else if (time == "" && name == "") {
         this.workoutsArr[this.id].name = this.workoutsArr[this.id].name;
         this.workoutsArr[this.id].time = this.workoutsArr[this.id].time;
@@ -387,12 +393,12 @@ class App {
           ? this.distance
           : this.workoutsArr[this.id].distance;
 
-      this.workoutsArr[this.id].distance = distance;
+      this.workoutsArr[this.id].distance = +distance!;
 
       const editedMarkup = this._createWorkoutMarkup(
         this.workoutsArr[this.id].name,
-        distance,
-        this.workoutsArr[this.id].time,
+        +distance!,
+        this.workoutsArr[this.id].time as string,
         speed,
         kcal
       );
@@ -405,7 +411,7 @@ class App {
 
       const elToEdit = document.querySelector(`[data-id=${idArr}]`);
 
-      elToEdit.innerHTML = editedMarkup;
+      elToEdit!.innerHTML = editedMarkup;
 
       this.parentID.classList.remove("hidden-left");
 
@@ -418,8 +424,8 @@ class App {
   }
 
   _setInputToEmpty() {
-    document.querySelector(".duration")!.value = "";
-    document.querySelector(".workout-title")!.value = "";
+    (document.querySelector(".duration")! as HTMLInputElement).value = "";
+    (document.querySelector(".workout-title")! as HTMLInputElement).value = "";
   }
 
   _createWorkoutMarkup(
@@ -440,8 +446,10 @@ class App {
     e.preventDefault();
     const target = e.target;
     if (target.classList.contains("btn_weight")) {
-      let newWeight = document.getElementById("weightInput")!.value;
-      runner.weight = newWeight;
+      let newWeight = (document.getElementById(
+        "weightInput"
+      )! as HTMLInputElement).value;
+      runner.weight = +newWeight;
     }
   }
 
@@ -459,7 +467,7 @@ class App {
     );
   }
 
-  _loadMap(position) {
+  _loadMap(position: { coords: { latitude: number[]; longitude: number[] } }) {
     const { latitude } = position.coords;
     const { longitude } = position.coords;
     const coords = [longitude, latitude];
@@ -563,7 +571,7 @@ class App {
         this._removeStartAndEnd();
         this._removeTrackAndRoute();
       }
-      return markCoordsArr, markArr;
+      return markArr;
     });
     return (this.markersArr = markArr);
   }
@@ -592,12 +600,13 @@ class App {
   ////////////////////////Workout generator/////////////////////////////////
 
   _newWorkout() {
-    let time = document.querySelector(".duration")!.value;
-    let name = document.querySelector(".workout-title")!.value;
+    let time = (document.querySelector(".duration")! as HTMLInputElement).value;
+    let name = (document.querySelector(".workout-title")! as HTMLInputElement)
+      .value;
     const warningInfo = document.querySelector(".workout__warning");
 
-    if (!isNaN(time) && time != "" && name != "") {
-      const workout = new Workout(time, name);
+    if (!isNaN(+time) && time != "" && name != "") {
+      const workout = new Workout(+time, name);
       const speed = workout.calcSpeed(this.distance).toFixed(2);
       const kcal = Math.trunc(workout.calcKcal(runner.weight));
       workout.start = this.#startPoint;
@@ -621,15 +630,18 @@ class App {
       warningInfo.remove();
     }
 
-    if (isNaN(time) || time == "" || name == "") {
-      const markupWarning = this._inputValidation(time, name);
+    if (isNaN(+time) || time == "" || name == "") {
+      const markupWarning = this._inputValidation(+time, name);
       const widthWindow = document.body.clientWidth;
 
       if (widthWindow < 600) {
         if (!workoutPanel.classList.contains("hidden"))
-          workoutPanel.insertAdjacentHTML("afterbegin", markupWarning);
+          workoutPanel.insertAdjacentHTML(
+            "afterbegin",
+            markupWarning as string
+          );
       } else if (widthWindow > 600) {
-        workouts.insertAdjacentHTML("afterbegin", markupWarning);
+        workouts.insertAdjacentHTML("afterbegin", markupWarning as string);
       }
     }
   }

@@ -386,13 +386,15 @@ var App = /** @class */ (function () {
             var workoutsUpdate = document.querySelectorAll(".workout");
             workoutsUpdate.forEach(function (e) {
                 var _a;
-                var idArr = e.dataset.id.split("-");
+                var idArr = e.dataset
+                    .id.split("-")
+                    .map(function (el) { return +el; });
                 idArr[1] = __classPrivateFieldGet(_this, _App_workoutID, "f");
                 e.dataset.id = idArr.join("-");
                 __classPrivateFieldSet(_this, _App_workoutID, (_a = __classPrivateFieldGet(_this, _App_workoutID, "f"), _a++, _a), "f");
             });
             this._calculateUserStats();
-            this.trackArr.splice(id, 1);
+            this.trackArr.splice(+id, 1);
             this._removeStartAndEnd();
             this._removeTrackAndRoute();
         }
@@ -405,6 +407,7 @@ var App = /** @class */ (function () {
             .value;
         if (target.classList.contains("btn-edit")) {
             this.parentID = target.closest(".workout");
+            console.log(this.parentID);
             this.parentID.classList.add("hidden-left");
             this.id = target.closest(".workout").dataset.id.split("-")[1];
             workoutPanel.classList.remove("hidden");
@@ -431,8 +434,8 @@ var App = /** @class */ (function () {
             var distance = this.markersArr.length > 0
                 ? this.distance
                 : this.workoutsArr[this.id].distance;
-            this.workoutsArr[this.id].distance = distance;
-            var editedMarkup = this._createWorkoutMarkup(this.workoutsArr[this.id].name, distance, this.workoutsArr[this.id].time, speed, kcal);
+            this.workoutsArr[this.id].distance = +distance;
+            var editedMarkup = this._createWorkoutMarkup(this.workoutsArr[this.id].name, +distance, this.workoutsArr[this.id].time, speed, kcal);
             this._calculateUserStats();
             workoutPanel.classList.add("hidden");
             var idArr = this.parentID.dataset.id;
@@ -456,7 +459,7 @@ var App = /** @class */ (function () {
         var target = e.target;
         if (target.classList.contains("btn_weight")) {
             var newWeight = document.getElementById("weightInput").value;
-            runner.weight = newWeight;
+            runner.weight = +newWeight;
         }
     };
     ////////////////////////Getting current location/////////////////////////////////
@@ -511,7 +514,7 @@ var App = /** @class */ (function () {
                 _this._removeStartAndEnd();
                 _this._removeTrackAndRoute();
             }
-            return markCoordsArr, markArr;
+            return markArr;
         });
         return (this.markersArr = markArr);
     };
@@ -539,10 +542,11 @@ var App = /** @class */ (function () {
     App.prototype._newWorkout = function () {
         var _a;
         var time = document.querySelector(".duration").value;
-        var name = document.querySelector(".workout-title").value;
+        var name = document.querySelector(".workout-title")
+            .value;
         var warningInfo = document.querySelector(".workout__warning");
-        if (!isNaN(time) && time != "" && name != "") {
-            var workout = new Workout(time, name);
+        if (!isNaN(+time) && time != "" && name != "") {
+            var workout = new Workout(+time, name);
             var speed = workout.calcSpeed(this.distance).toFixed(2);
             var kcal = Math.trunc(workout.calcKcal(runner.weight));
             workout.start = __classPrivateFieldGet(this, _App_startPoint, "f");
@@ -559,8 +563,8 @@ var App = /** @class */ (function () {
         if (warningInfo) {
             warningInfo.remove();
         }
-        if (isNaN(time) || time == "" || name == "") {
-            var markupWarning = this._inputValidation(time, name);
+        if (isNaN(+time) || time == "" || name == "") {
+            var markupWarning = this._inputValidation(+time, name);
             var widthWindow = document.body.clientWidth;
             if (widthWindow < 600) {
                 if (!workoutPanel.classList.contains("hidden"))
