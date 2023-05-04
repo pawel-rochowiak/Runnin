@@ -42,9 +42,10 @@ class Workout {
   time: number;
   name: string;
   distance?: number | string;
-  private speed!: number;
-  private kcal!: number;
-
+  protected speed!: number;
+  protected kcal!: number;
+  start?: number[];
+  end?: number[];
   date: Date = new Date();
   id: string = (Date.now() + "").slice(-10);
 
@@ -81,7 +82,7 @@ class App {
   distance?: number;
   total!: number;
   isEditing?: boolean;
-  //geojsonTrack;
+  geojsonTrack?: { geometry: { coordinates: number[] } };
   trackArr: { geometry: { coordinates: [] } }[] = [];
   markersArr: Markers[] = [];
   workoutsArr: {
@@ -90,6 +91,8 @@ class App {
     speed: number;
     name: string;
     time: number | string;
+    calcSpeed: Function;
+    calcKcal: Function;
   }[] = [];
 
   constructor() {
@@ -151,7 +154,6 @@ class App {
       const id: number = +parent.dataset.id?.toString().split("-")[1]!;
       const coords: [number, number][] = this.trackArr[+id]?.geometry
         .coordinates;
-      console.log(this.trackArr);
       this.markersArr.forEach((e) => {
         e.remove();
       });
@@ -343,18 +345,20 @@ class App {
     }
   }
 
-  _editWorkout(e: Event) {
-    const target = e.target as HTMLElement;
+  _editWorkout(e: Event): void | number {
+    const target = e.target! as HTMLElement;
     const edit = document.querySelector(".workout__edit")! as HTMLButtonElement;
     let time = (document.querySelector(".duration") as HTMLInputElement).value;
     let name = (document.querySelector(".workout-title") as HTMLInputElement)
       .value;
 
-    if (target!.classList.contains("btn-edit")) {
-      this.parentID = target!.closest(".workout") as HTMLDivElement;
-      console.log(this.parentID);
+    if (target.classList.contains("btn-edit")) {
+      this.parentID = target.closest(".workout") as HTMLDivElement;
       this.parentID!.classList.add("hidden-left");
-      this.id = target.closest(".workout")!.dataset.id.split("-")[1];
+      const workout = target.closest(".workout") as HTMLDivElement;
+      if (workout) {
+        this.id = +workout.dataset.id.split("-")[1];
+      }
 
       workoutPanel.classList.remove("hidden");
 
@@ -400,20 +404,20 @@ class App {
         +distance!,
         this.workoutsArr[this.id].time as string,
         speed,
-        kcal
+        kcal.toString()
       );
 
       this._calculateUserStats();
 
       workoutPanel.classList.add("hidden");
 
-      const idArr = this.parentID.dataset.id;
+      const idArr = (this.parentID! as HTMLDivElement).dataset.id;
 
       const elToEdit = document.querySelector(`[data-id=${idArr}]`);
 
       elToEdit!.innerHTML = editedMarkup;
 
-      this.parentID.classList.remove("hidden-left");
+      (this.parentID! as HTMLDivElement).classList.remove("hidden-left");
 
       this._setInputToEmpty();
 
@@ -467,10 +471,10 @@ class App {
     );
   }
 
-  _loadMap(position: { coords: { latitude: number[]; longitude: number[] } }) {
-    const { latitude } = position.coords;
-    const { longitude } = position.coords;
-    const coords = [longitude, latitude];
+  _loadMap() {
+    // const { latitude } = position.coords;
+    // const { longitude } = position.coords;
+    // const coordsArr = [longitude, latitude];
     const spinner = document.querySelector(".spinner")!;
     spinner.remove();
 
@@ -479,7 +483,7 @@ class App {
     this.#map = new mapboxgl.Map({
       container: "map",
       style: "mapbox://styles/talenikov/cl0sp2kal004b15pem1el6bls",
-      center: coords, // starting position
+      center: this.#startPoint, // starting position
       zoom: this.#mapZoom,
     });
     this._getStartEnd();
@@ -487,7 +491,7 @@ class App {
 
   ////////////////////////Geting rout between two markers (geajason data is stored to be later one used for displaying tracks for workouts)/////////////////////////////////
 
-  _getRoute = async function (start: number, end: number) {
+  _getRoute = async (start: number[], end: number[]) => {
     // make a directions request
     this.isEditing = true;
     warningInfo.remove();
@@ -539,11 +543,11 @@ class App {
   };
 
   _getStartEnd() {
-    let markCoordsArr: number[] = [];
-    let markArr = [];
+    let markCoordsArr: [number, number][] = [];
+    let markArr: Markers[] = [];
 
-    this.#map.on("click", (event) => {
-      const coords = Object.keys(event.lngLat).map((key) => event.lngLat[key]);
+    this.#map.on("click", (event: { lngLat: { lng: number; lat: number } }) => {
+      const coords = Object.values(event.lngLat);
       workoutPanel.classList.remove("hidden");
 
       const customMarker = document.createElement("div");
@@ -554,15 +558,15 @@ class App {
         draggable: true,
         element: customMarker,
       })
-        .setLngLat(coords)
+        .setLngLat(coords as [number, number])
         .addTo(this.#map);
 
       markArr.push(marker);
-      markCoordsArr.push(coords);
+      markCoordsArr.push(coords as [number, number]);
 
       if (markCoordsArr.length == 2) {
         this._getRoute(markCoordsArr[0], markCoordsArr[1]);
-
+        console.log(markArr);
         markCoordsArr = [];
       }
 
@@ -607,16 +611,16 @@ class App {
 
     if (!isNaN(+time) && time != "" && name != "") {
       const workout = new Workout(+time, name);
-      const speed = workout.calcSpeed(this.distance).toFixed(2);
+      const speed = workout.calcSpeed(this.distance as number).toFixed(2);
       const kcal = Math.trunc(workout.calcKcal(runner.weight));
       workout.start = this.#startPoint;
       workout.end = this.#endPoint;
-      workout.distance = +this.distance;
+      workout.distance = +this.distance!;
       this.trackArr.push(this.geojsonTrack);
 
       // prettier-ignore
       const markup = `<div
-      class="workout mt-3 pt-3 bg-white bg-opacity-85 rounded-1 shadow-main position-relative" data-id="w-${this.#workoutID}">${this._createWorkoutMarkup(name,this.distance,time,speed,kcal)}
+      class="workout mt-3 pt-3 bg-white bg-opacity-85 rounded-1 shadow-main position-relative" data-id="w-${this.#workoutID}">${this._createWorkoutMarkup(name,this.distance as number,time,speed,kcal.toString())}
       </div>`;
 
       this.workoutsArr.push(workout);

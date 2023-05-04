@@ -101,74 +101,72 @@ var Workout = /** @class */ (function () {
 }());
 var App = /** @class */ (function () {
     function App() {
+        var _this = this;
         _App_mapZoom.set(this, 12);
         _App_map.set(this, void 0);
         _App_startPoint.set(this, [17.026715, 51.057728]);
         _App_endPoint.set(this, void 0);
         _App_workoutID.set(this, 0);
-        //geojsonTrack;
         this.trackArr = [];
         this.markersArr = [];
         this.workoutsArr = [];
         ////////////////////////Geting rout between two markers (geajason data is stored to be later one used for displaying tracks for workouts)/////////////////////////////////
-        this._getRoute = function (start, end) {
-            return __awaiter(this, void 0, void 0, function () {
-                var query, json, data, distance, route, geojson;
-                return __generator(this, function (_a) {
-                    switch (_a.label) {
-                        case 0:
-                            // make a directions request
-                            this.isEditing = true;
-                            warningInfo.remove();
-                            return [4 /*yield*/, fetch("https://api.mapbox.com/directions/v5/mapbox/walking/".concat(start[0], ",").concat(start[1], ";").concat(end[0], ",").concat(end[1], "?steps=true&geometries=geojson&access_token=").concat(mapboxgl.accessToken), { method: "GET" })];
-                        case 1:
-                            query = _a.sent();
-                            return [4 /*yield*/, query.json()];
-                        case 2:
-                            json = _a.sent();
-                            data = json.routes[0];
-                            distance = data.distance / 1000;
-                            route = data.geometry.coordinates;
-                            geojson = {
-                                type: "Feature",
-                                properties: {},
-                                geometry: {
-                                    type: "LineString",
-                                    coordinates: route,
+        this._getRoute = function (start, end) { return __awaiter(_this, void 0, void 0, function () {
+            var query, json, data, distance, route, geojson;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        // make a directions request
+                        this.isEditing = true;
+                        warningInfo.remove();
+                        return [4 /*yield*/, fetch("https://api.mapbox.com/directions/v5/mapbox/walking/".concat(start[0], ",").concat(start[1], ";").concat(end[0], ",").concat(end[1], "?steps=true&geometries=geojson&access_token=").concat(mapboxgl.accessToken), { method: "GET" })];
+                    case 1:
+                        query = _a.sent();
+                        return [4 /*yield*/, query.json()];
+                    case 2:
+                        json = _a.sent();
+                        data = json.routes[0];
+                        distance = data.distance / 1000;
+                        route = data.geometry.coordinates;
+                        geojson = {
+                            type: "Feature",
+                            properties: {},
+                            geometry: {
+                                type: "LineString",
+                                coordinates: route,
+                            },
+                        };
+                        // if the route already exists on the map, we'll reset it using setData
+                        if (__classPrivateFieldGet(this, _App_map, "f").getSource("route")) {
+                            __classPrivateFieldGet(this, _App_map, "f").getSource("route").setData(geojson);
+                        }
+                        // otherwise, we'll make a new request
+                        else {
+                            __classPrivateFieldGet(this, _App_map, "f").addLayer({
+                                id: "route",
+                                type: "line",
+                                source: {
+                                    type: "geojson",
+                                    data: geojson,
                                 },
-                            };
-                            // if the route already exists on the map, we'll reset it using setData
-                            if (__classPrivateFieldGet(this, _App_map, "f").getSource("route")) {
-                                __classPrivateFieldGet(this, _App_map, "f").getSource("route").setData(geojson);
-                            }
-                            // otherwise, we'll make a new request
-                            else {
-                                __classPrivateFieldGet(this, _App_map, "f").addLayer({
-                                    id: "route",
-                                    type: "line",
-                                    source: {
-                                        type: "geojson",
-                                        data: geojson,
-                                    },
-                                    layout: {
-                                        "line-join": "round",
-                                        "line-cap": "round",
-                                    },
-                                    paint: {
-                                        "line-color": "#ad3d1e",
-                                        "line-width": 5,
-                                        "line-opacity": 0.75,
-                                    },
-                                });
-                            }
-                            if (this.isEditing) {
-                                this.trackArr[this.id] = geojson;
-                            }
-                            return [2 /*return*/, ((this.distance = distance), (this.geojsonTrack = geojson))];
-                    }
-                });
+                                layout: {
+                                    "line-join": "round",
+                                    "line-cap": "round",
+                                },
+                                paint: {
+                                    "line-color": "#ad3d1e",
+                                    "line-width": 5,
+                                    "line-opacity": 0.75,
+                                },
+                            });
+                        }
+                        if (this.isEditing) {
+                            this.trackArr[this.id] = geojson;
+                        }
+                        return [2 /*return*/, ((this.distance = distance), (this.geojsonTrack = geojson))];
+                }
             });
-        };
+        }); };
         this._getLocation();
         // prettier-ignore
         userIcon.addEventListener("click", function () {
@@ -217,7 +215,6 @@ var App = /** @class */ (function () {
             var parent_1 = target.closest(".workout");
             var id = +((_a = parent_1.dataset.id) === null || _a === void 0 ? void 0 : _a.toString().split("-")[1]);
             var coords = (_b = this.trackArr[+id]) === null || _b === void 0 ? void 0 : _b.geometry.coordinates;
-            console.log(this.trackArr);
             this.markersArr.forEach(function (e) {
                 e.remove();
             });
@@ -407,9 +404,11 @@ var App = /** @class */ (function () {
             .value;
         if (target.classList.contains("btn-edit")) {
             this.parentID = target.closest(".workout");
-            console.log(this.parentID);
             this.parentID.classList.add("hidden-left");
-            this.id = target.closest(".workout").dataset.id.split("-")[1];
+            var workout = target.closest(".workout");
+            if (workout) {
+                this.id = +workout.dataset.id.split("-")[1];
+            }
             workoutPanel.classList.remove("hidden");
             if (this.id) {
                 // prettier-ignore
@@ -435,7 +434,7 @@ var App = /** @class */ (function () {
                 ? this.distance
                 : this.workoutsArr[this.id].distance;
             this.workoutsArr[this.id].distance = +distance;
-            var editedMarkup = this._createWorkoutMarkup(this.workoutsArr[this.id].name, +distance, this.workoutsArr[this.id].time, speed, kcal);
+            var editedMarkup = this._createWorkoutMarkup(this.workoutsArr[this.id].name, +distance, this.workoutsArr[this.id].time, speed, kcal.toString());
             this._calculateUserStats();
             workoutPanel.classList.add("hidden");
             var idArr = this.parentID.dataset.id;
@@ -470,10 +469,10 @@ var App = /** @class */ (function () {
             alert("Could not get your position:( Please alow your location in order to start tracking your workouts:)");
         });
     };
-    App.prototype._loadMap = function (position) {
-        var latitude = position.coords.latitude;
-        var longitude = position.coords.longitude;
-        var coords = [longitude, latitude];
+    App.prototype._loadMap = function () {
+        // const { latitude } = position.coords;
+        // const { longitude } = position.coords;
+        // const coordsArr = [longitude, latitude];
         var spinner = document.querySelector(".spinner");
         spinner.remove();
         mapboxgl.accessToken =
@@ -481,7 +480,7 @@ var App = /** @class */ (function () {
         __classPrivateFieldSet(this, _App_map, new mapboxgl.Map({
             container: "map",
             style: "mapbox://styles/talenikov/cl0sp2kal004b15pem1el6bls",
-            center: coords,
+            center: __classPrivateFieldGet(this, _App_startPoint, "f"),
             zoom: __classPrivateFieldGet(this, _App_mapZoom, "f"),
         }), "f");
         this._getStartEnd();
@@ -491,7 +490,7 @@ var App = /** @class */ (function () {
         var markCoordsArr = [];
         var markArr = [];
         __classPrivateFieldGet(this, _App_map, "f").on("click", function (event) {
-            var coords = Object.keys(event.lngLat).map(function (key) { return event.lngLat[key]; });
+            var coords = Object.values(event.lngLat);
             workoutPanel.classList.remove("hidden");
             var customMarker = document.createElement("div");
             var className = markCoordsArr.length < 1 ? "marker" : "markerEnd";
@@ -507,6 +506,7 @@ var App = /** @class */ (function () {
             markCoordsArr.push(coords);
             if (markCoordsArr.length == 2) {
                 _this._getRoute(markCoordsArr[0], markCoordsArr[1]);
+                console.log(markArr);
                 markCoordsArr = [];
             }
             if (markArr.length > 2) {
@@ -554,7 +554,7 @@ var App = /** @class */ (function () {
             workout.distance = +this.distance;
             this.trackArr.push(this.geojsonTrack);
             // prettier-ignore
-            var markup = "<div\n      class=\"workout mt-3 pt-3 bg-white bg-opacity-85 rounded-1 shadow-main position-relative\" data-id=\"w-".concat(__classPrivateFieldGet(this, _App_workoutID, "f"), "\">").concat(this._createWorkoutMarkup(name, this.distance, time, speed, kcal), "\n      </div>");
+            var markup = "<div\n      class=\"workout mt-3 pt-3 bg-white bg-opacity-85 rounded-1 shadow-main position-relative\" data-id=\"w-".concat(__classPrivateFieldGet(this, _App_workoutID, "f"), "\">").concat(this._createWorkoutMarkup(name, this.distance, time, speed, kcal.toString()), "\n      </div>");
             this.workoutsArr.push(workout);
             __classPrivateFieldSet(this, _App_workoutID, (_a = __classPrivateFieldGet(this, _App_workoutID, "f"), _a++, _a), "f");
             workouts.insertAdjacentHTML("beforeend", markup);
